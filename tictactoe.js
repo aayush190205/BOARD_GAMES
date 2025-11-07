@@ -1,3 +1,7 @@
+// --- Auth Check ---
+authCheck();
+document.getElementById("logoutBtn").addEventListener("click", handleLogout);
+
 // ====================== Variables ======================
 let currentPlayer = "X";
 let board = Array(9).fill("");
@@ -15,6 +19,7 @@ let aiEnabled = false;
 let aiDifficulty = "hard";
 let aiFirst = false;
 let firstMoveDone = false;
+let moveHistory = []; // <-- NEW: For replays
 
 const menuScreen = document.getElementById("menuScreen");
 const gameScreen = document.getElementById("gameScreen");
@@ -31,7 +36,6 @@ const playHumanBtn = document.getElementById("playHuman");
 const playAIBtn = document.getElementById("playAI");
 const restartBtn = document.getElementById("restart");
 const backMenuBtn = document.getElementById("backMenu");
-const themeToggle = document.getElementById("themeToggle");
 
 const playerXInput = document.getElementById("playerX");
 const playerOInput = document.getElementById("playerO");
@@ -79,7 +83,7 @@ function startGame(vsAI = false) {
   nameOEl.textContent = playerNames.O;
 
   timerEnabled = enableTimerInput.checked;
-  timerSeconds = Math.max(3, Math.min(60, parseInt(timerSecondsInput.value || "10", 10)));
+  timerSeconds = 10; // Hard-coded from your HTML
   timerBox.textContent = timerEnabled ? `Timer: ${timerSeconds}s` : "Timer: —";
 
   tournamentMode = tournamentModeInput.checked;
@@ -97,13 +101,14 @@ function resetBoard(startNew = false) {
   currentPlayer = "X";
   gameActive = true;
   firstMoveDone = false;
+  moveHistory = []; // <-- NEW: Reset history
 
   boardEl.innerHTML = "";
   for (let i = 0; i < 9; i++) {
     const cell = document.createElement("div");
     cell.className = "cell";
     cell.dataset.index = String(i);
-    cell.addEventListener("click", onCellClick, { once: true });
+    cell.addEventListener("click", onCellClick);
     boardEl.appendChild(cell);
   }
 
@@ -112,7 +117,6 @@ function resetBoard(startNew = false) {
   stopTimer();
   if (timerEnabled) startTurnTimer();
 
-  // Trigger AI move if AI plays first
   if (aiEnabled) {
     const aiMarker = aiFirst ? "X" : "O";
     if (currentPlayer === aiMarker && !firstMoveDone) {
@@ -130,17 +134,28 @@ function onCellClick(e) {
   if (!gameActive) return;
   const idx = Number(e.currentTarget.dataset.index);
   if (board[idx] !== "") return;
+  
+  // Prevent human from moving during AI's turn
+  if (aiEnabled) {
+    const aiMarker = aiFirst ? "X" : "O";
+    if (currentPlayer === aiMarker) return;
+  }
 
   makeMove(idx, currentPlayer);
 }
 
 // ====================== Make Move ======================
 function makeMove(idx, player) {
+  if (!gameActive || board[idx] !== "") return;
+
   board[idx] = player;
+  moveHistory.push({ player, index: idx }); // <-- NEW: Record move
+  
   const cell = boardEl.querySelector(`.cell[data-index="${idx}"]`);
   if (cell) {
-    cell.textContent = player;
+    cell.innerHTML = `<span>${player}</span>`;
     cell.classList.add("disabled");
+    cell.removeEventListener("click", onCellClick); // More robust than { once: true }
   }
 
   if (checkWinFor(player)) {
@@ -191,17 +206,26 @@ function endGame(message, resultKey) {
   } else {
     scores.D += 1;
   }
+  
+  // --- NEW: Save Stats & Replay ---
+  if (!tournamentMode) { // Only save non-tournament games
+    saveGameStats(resultKey);
+    saveGameReplay(resultKey);
+  }
+  // --- End New ---
+  
   renderScores();
   stopTimer();
 
   if (tournamentMode) {
     roundsPlayed++;
-    if (tournamentWins.X === 2 || tournamentWins.O === 2 || roundsPlayed >= 3) {
-      alert(`Tournament Over!\nWinner: ${tournamentWins.X > tournamentWins.O ? playerNames.X : (tournamentWins.O > tournamentWins.X ? playerNames.O : "Draw")}`);
+    if (tournamentWins.X === 2 || tournamentWins.O === 2 || (roundsPlayed >= 3 && tournamentWins.X !== tournamentWins.O)) {
+      const winner = tournamentWins.X > tournamentWins.O ? playerNames.X : (tournamentWins.O > tournamentWins.X ? playerNames.O : "Draw");
+      alert(`Tournament Over!\nWinner: ${winner}`);
       backMenuBtn.click();
       return;
     } else {
-      setTimeout(() => resetBoard(true), 1000);
+      setTimeout(() => resetBoard(true), 1500);
     }
   }
 }
@@ -241,8 +265,62 @@ function autoMoveForCurrent() {
   makeMove(idx, currentPlayer);
 }
 
-// ====================== AI Logic ======================
-// ====================== AI Logic ======================
+// ====================== NEW: Data Saving ======================
+function saveGameStats(resultKey) {
+  const user = loggedInUser; // from global.js
+  if (!user) return; // Shouldn't happen, but safe to check
+  
+  const allStats = getDb("gameStats");
+  const userStats = allStats[user].ticTacToe;
+
+  if (aiEnabled) {
+    // Determine if user won, lost, or drew vs AI
+    const aiMarker = aiFirst ? "X" : "O";
+    if (resultKey === "D") {
+      userStats.draws++;
+    } else if (resultKey === aiMarker) {
+      userStats.losses++;
+    } else {
+      userStats.wins++;
+    }
+  } else {
+    // In human vs human, we can't know who is the "user"
+    // For simplicity, we'll just record it as a draw
+    userStats.draws++; 
+  }
+  
+  setDb("gameStats", allStats);
+}
+
+function saveGameReplay(resultKey) {
+  const user = loggedInUser;
+  if (!user) return;
+  
+  const allReplays = getDb("gameReplays");
+  const userReplays = allReplays[user];
+  
+  let resultText;
+  if (resultKey === "D") resultText = "Draw";
+  else resultText = `${playerNames[resultKey]} Won`;
+
+  const replay = {
+    id: new Date().getTime(), // Unique ID
+    game: "Tic Tac Toe",
+    result: resultText,
+    opponent: aiEnabled ? `AI (${aiDifficulty})` : "Human",
+    date: new Date().toLocaleDateString(),
+    moves: moveHistory,
+    players: { X: playerNames.X, O: playerNames.O }
+  };
+  
+  userReplays.unshift(replay); // Add to start of array
+  if (userReplays.length > 20) userReplays.pop(); // Keep max 20 replays
+  
+  setDb("gameReplays", allReplays);
+}
+
+
+// ====================== AI Logic (Unchanged) ======================
 function bestAIMove(aiMarker) {
   const humanMarker = aiMarker === "X" ? "O" : "X";
   const empty = board.map((v,i)=>v===""?i:-1).filter(i=>i!==-1);
@@ -267,20 +345,14 @@ function bestAIMove(aiMarker) {
       bestMoves.push(idx);
     }
   }
-
   return bestMoves[Math.floor(Math.random() * bestMoves.length)];
 }
 
 function minimax(newBoard, depth, isMax, aiMarker, humanMarker, depthLimit, alpha = -Infinity, beta = Infinity) {
-  // Terminal states
   if (checkWinFor(aiMarker)) return 10 - depth;
   if (checkWinFor(humanMarker)) return depth - 10;
   if (newBoard.every(v => v !== "")) return 0;
-
-  // Depth cutoff for easier AI
-  if (depth >= depthLimit) {
-    return heuristicScore(newBoard, aiMarker, humanMarker);
-  }
+  if (depth >= depthLimit) return heuristicScore(newBoard, aiMarker, humanMarker);
 
   const empty = newBoard.map((v, i) => v === "" ? i : -1).filter(i => i !== -1);
 
@@ -292,7 +364,7 @@ function minimax(newBoard, depth, isMax, aiMarker, humanMarker, depthLimit, alph
       newBoard[idx] = "";
       best = Math.max(best, score);
       alpha = Math.max(alpha, best);
-      if (beta <= alpha) break; // prune
+      if (beta <= alpha) break;
     }
     return best;
   } else {
@@ -303,25 +375,20 @@ function minimax(newBoard, depth, isMax, aiMarker, humanMarker, depthLimit, alph
       newBoard[idx] = "";
       best = Math.min(best, score);
       beta = Math.min(beta, best);
-      if (beta <= alpha) break; // prune
+      if (beta <= alpha) break;
     }
     return best;
   }
 }
 
-
-// Simple heuristic to make easy/medium weaker
 function heuristicScore(board, aiMarker, humanMarker) {
   const center = 4;
   const corners = [0,2,6,8];
   let score = 0;
-
   if (board[center] === aiMarker) score += 2;
   if (corners.some(c => board[c] === aiMarker)) score += 1;
-
   if (board[center] === humanMarker) score -= 2;
   if (corners.some(c => board[c] === humanMarker)) score -= 1;
-
   return score;
 }
 
@@ -341,16 +408,14 @@ restartBtn.addEventListener("click", () => resetBoard(false));
 backMenuBtn.addEventListener("click", () => {
   stopTimer();
   gameActive = false;
+  scores = { X: 0, O: 0, D: 0 }; // Reset session scores
+  renderScores();
   gameScreen.classList.add("hidden");
   menuScreen.classList.remove("hidden");
 });
 
-themeToggle.addEventListener("click", () => {
-  const isLight = document.body.classList.toggle("light-theme");
-  themeToggle.textContent = `Theme: ${isLight ? "Light" : "Royal"}`;
-});
-
-
+// Set default player name to logged in user
+if (loggedInUser) {
+  playerXInput.value = loggedInUser;
+}
 renderScores();
-
-
