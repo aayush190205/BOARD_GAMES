@@ -1,10 +1,11 @@
-/* Connect 4 game script */
+// --- Auth Check ---
+authCheck();
+document.getElementById("logoutBtn").addEventListener("click", handleLogout);
 
-// Board size
+// ====================== Variables ======================
 const ROWS = 6;
 const COLS = 7;
 
-// Game state
 let board = [];
 let currentPlayer = "R"; // R = Red, Y = Yellow
 let gameActive = false;
@@ -24,6 +25,7 @@ let tournamentWins = { R: 0, Y: 0 };
 let aiEnabled = false;
 let aiDifficulty = "hard";
 let aiFirst = false;
+let moveHistory = []; // <-- NEW: For replays
 
 // DOM
 const menuScreen = document.getElementById("menuScreen");
@@ -41,7 +43,6 @@ const playHumanBtn = document.getElementById("playHuman");
 const playAIBtn = document.getElementById("playAI");
 const restartBtn = document.getElementById("restart");
 const backMenuBtn = document.getElementById("backMenu");
-const themeToggle = document.getElementById("themeToggle");
 
 const playerRedInput = document.getElementById("playerRed");
 const playerYellowInput = document.getElementById("playerYellow");
@@ -53,7 +54,7 @@ const aiOptions = document.getElementById("aiOptions");
 const aiDifficultyInput = document.getElementById("aiDifficulty");
 const aiFirstInput = document.getElementById("aiFirst");
 
-// Utilities
+// ====================== Game Setup ======================
 function createEmptyBoard() {
   const b = [];
   for (let r = 0; r < ROWS; r++) {
@@ -87,7 +88,7 @@ function startGame(vsAI = false) {
     playerNames.R = rName || "Red";
     playerNames.Y = yName || "Yellow";
   }
-   currentPlayer = "R";
+  currentPlayer = "R";
 
   nameREl.textContent = playerNames.R;
   nameYEl.textContent = playerNames.Y;
@@ -110,6 +111,7 @@ function resetBoard(startNew = false) {
   board = createEmptyBoard();
   currentPlayer = "R";
   gameActive = true;
+  moveHistory = []; // <-- NEW: Reset history
 
   boardEl.innerHTML = "";
   for (let r = 0; r < ROWS; r++) {
@@ -118,17 +120,19 @@ function resetBoard(startNew = false) {
       slot.className = "connect4-slot";
       slot.dataset.row = r;
       slot.dataset.col = c;
-      slot.addEventListener("click", onSlotClick);
+      // We will add click listeners to the *top row* only
+      if (r === 0) {
+        slot.addEventListener("click", onSlotClick);
+      }
       boardEl.appendChild(slot);
     }
   }
-
+  updateTopRowListeners(); // Enable/disable top row
   updateStatus(`${playerNames[currentPlayer]}'s Turn`);
 
   stopTimer();
   if (timerEnabled) startTurnTimer();
 
-  // If AI plays first, let it move
   if (aiEnabled && gameActive) {
     const aiMarker = playerNames.R === "Computer" ? "R" : "Y";
     if (currentPlayer === aiMarker) {
@@ -137,7 +141,7 @@ function resetBoard(startNew = false) {
   }
 }
 
-// Handle click (drop in column)
+// ====================== Game Play ======================
 function onSlotClick(e) {
   if (!gameActive) return;
   const col = Number(e.currentTarget.dataset.col);
@@ -147,7 +151,6 @@ function onSlotClick(e) {
 function handlePlayerMove(col) {
   if (!gameActive) return;
 
-  // *** BUG FIX 1: Prevent human from moving during AI's turn ***
   if(aiEnabled) {
       const aiColor = playerNames.R === "Computer" ? "R" : "Y";
       if(currentPlayer === aiColor) return;
@@ -157,10 +160,12 @@ function handlePlayerMove(col) {
   if (row === -1) return; // Column is full
 
   placePiece(row, col, currentPlayer);
+  moveHistory.push({ player: currentPlayer, col: col }); // <-- NEW: Record move
   renderBoard();
 
-  if (checkWin(board, currentPlayer)) {
-    endGame(`${playerNames[currentPlayer]} Wins!`, currentPlayer);
+  const winInfo = checkWin(board, currentPlayer);
+  if (winInfo.win) {
+    endGame(`${playerNames[currentPlayer]} Wins!`, currentPlayer, winInfo.line);
     return;
   }
   if (isBoardFull(board)) {
@@ -170,6 +175,7 @@ function handlePlayerMove(col) {
 
   currentPlayer = currentPlayer === "R" ? "Y" : "R";
   updateStatus(`${playerNames[currentPlayer]}'s Turn`);
+  updateTopRowListeners();
   stopTimer();
   if (timerEnabled) startTurnTimer();
 
@@ -192,29 +198,55 @@ function placePiece(r, c, marker) {
   board[r][c] = marker;
 }
 
-// *** BUG FIX 2: Correctly render pieces by adding them, not modifying them ***
 function renderBoard() {
-    board.forEach((row, r) => {
-        row.forEach((cell, c) => {
-            if(cell !== null) {
-                const slot = boardEl.querySelector(`[data-row='${r}'][data-col='${c}']`);
-                // Only add a piece element if the slot doesn't have one yet
-                if (!slot.querySelector('.piece')) {
-                    const piece = document.createElement("div");
-                    piece.className = "piece";
-                    piece.classList.add(cell === "R" ? "red" : "yellow");
-                    slot.appendChild(piece);
-                    slot.classList.add("disabled");
-                }
-            }
-        });
+  board.forEach((row, r) => {
+    row.forEach((cell, c) => {
+      if(cell !== null) {
+        const slot = boardEl.querySelector(`[data-row='${r}'][data-col='${c}']`);
+        if (slot && !slot.querySelector('.piece')) {
+          const piece = document.createElement("div");
+          piece.className = "piece";
+          piece.classList.add(cell === "R" ? "red" : "yellow");
+          // Apply drop animation based on row
+          piece.style.animationDelay = `${r * 0.05}s`;
+          piece.style.transform = `translateY(-${(r + 1) * 100}px)`;
+          slot.appendChild(piece);
+        }
+      }
     });
+  });
 }
 
-// Game end
-function endGame(message, resultKey) {
+// Enable/disable top row clicks
+function updateTopRowListeners() {
+    for (let c = 0; c < COLS; c++) {
+        const topSlot = boardEl.querySelector(`[data-row='0'][data-col='${c}']`);
+        if (topSlot) {
+            if (getDropRow(board, c) === -1) { // Column is full
+                topSlot.classList.add("disabled");
+                topSlot.removeEventListener("click", onSlotClick);
+            } else {
+                topSlot.classList.remove("disabled");
+                topSlot.addEventListener("click", onSlotClick);
+            }
+        }
+    }
+}
+
+
+// ====================== Game End ======================
+function endGame(message, resultKey, winLine = []) {
   gameActive = false;
   updateStatus(message);
+
+  // --- NEW: Highlight winning pieces ---
+  winLine.forEach(pos => {
+      const [r, c] = pos;
+      const slot = boardEl.querySelector(`[data-row='${r}'][data-col='${c}']`);
+      if (slot && slot.firstChild) {
+          slot.firstChild.classList.add("win");
+      }
+  });
 
   if (resultKey === "R" || resultKey === "Y") {
     scores[resultKey] += 1;
@@ -222,6 +254,14 @@ function endGame(message, resultKey) {
   } else {
     scores.D += 1;
   }
+  
+  // --- NEW: Save Stats & Replay ---
+  if (!tournamentMode) {
+      saveGameStats(resultKey);
+      saveGameReplay(resultKey);
+  }
+  // --- End New ---
+  
   renderScores();
   stopTimer();
 
@@ -248,7 +288,7 @@ function renderScores() {
 
 function updateStatus(text) { statusEl.textContent = text; }
 
-// Timer
+// ====================== Timer ======================
 function startTurnTimer() {
   stopTimer();
   timeLeft = timerSeconds;
@@ -273,7 +313,7 @@ function autoMoveForCurrent() {
   handlePlayerMove(col);
 }
 
-// Board utilities
+// ====================== Board Utilities ======================
 function isBoardFull(b) {
   return b[0].every(cell => cell !== null);
 }
@@ -282,35 +322,90 @@ function checkWin(b, marker) {
   // horizontal
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS - 3; c++) {
-      if (b[r][c] === marker && b[r][c+1] === marker && b[r][c+2] === marker && b[r][c+3] === marker) return true;
+      if (b[r][c] === marker && b[r][c+1] === marker && b[r][c+2] === marker && b[r][c+3] === marker)
+        return { win: true, line: [[r,c], [r,c+1], [r,c+2], [r,c+3]] };
     }
   }
   // vertical
   for (let c = 0; c < COLS; c++) {
     for (let r = 0; r < ROWS - 3; r++) {
-      if (b[r][c] === marker && b[r+1][c] === marker && b[r+2][c] === marker && b[r+3][c] === marker) return true;
+      if (b[r][c] === marker && b[r+1][c] === marker && b[r+2][c] === marker && b[r+3][c] === marker)
+        return { win: true, line: [[r,c], [r+1,c], [r+2,c], [r+3,c]] };
     }
   }
   // diag down-right
   for (let r = 0; r < ROWS - 3; r++) {
     for (let c = 0; c < COLS - 3; c++) {
-      if (b[r][c] === marker && b[r+1][c+1] === marker && b[r+2][c+2] === marker && b[r+3][c+3] === marker) return true;
+      if (b[r][c] === marker && b[r+1][c+1] === marker && b[r+2][c+2] === marker && b[r+3][c+3] === marker)
+        return { win: true, line: [[r,c], [r+1,c+1], [r+2,c+2], [r+3,c+3]] };
     }
   }
   // diag down-left
   for (let r = 0; r < ROWS - 3; r++) {
     for (let c = 3; c < COLS; c++) {
-      if (b[r][c] === marker && b[r+1][c-1] === marker && b[r+2][c-2] === marker && b[r+3][c-3] === marker) return true;
+      if (b[r][c] === marker && b[r+1][c-1] === marker && b[r+2][c-2] === marker && b[r+3][c-3] === marker)
+        return { win: true, line: [[r,c], [r+1,c-1], [r+2,c-2], [r+3,c-3]] };
     }
   }
-  return false;
+  return { win: false };
 }
 
-// ============ AI ============
+// ====================== NEW: Data Saving ======================
+function saveGameStats(resultKey) {
+  const user = loggedInUser;
+  if (!user) return;
+  
+  const allStats = getDb("gameStats");
+  const userStats = allStats[user].connect4;
+
+  if (aiEnabled) {
+    const aiMarker = playerNames.R === "Computer" ? "R" : "Y";
+    if (resultKey === "D") {
+      userStats.draws++;
+    } else if (resultKey === aiMarker) {
+      userStats.losses++;
+    } else {
+      userStats.wins++;
+    }
+  } else {
+    userStats.draws++; // Mark as draw for human v human
+  }
+  
+  setDb("gameStats", allStats);
+}
+
+function saveGameReplay(resultKey) {
+  const user = loggedInUser;
+  if (!user) return;
+  
+  const allReplays = getDb("gameReplays");
+  const userReplays = allReplays[user];
+  
+  let resultText;
+  if (resultKey === "D") resultText = "Draw";
+  else resultText = `${playerNames[resultKey]} Won`;
+
+  const replay = {
+    id: new Date().getTime(),
+    game: "Connect 4",
+    result: resultText,
+    opponent: aiEnabled ? `AI (${aiDifficulty})` : "Human",
+    date: new Date().toLocaleDateString(),
+    moves: moveHistory,
+    players: { R: playerNames.R, Y: playerNames.Y }
+  };
+  
+  userReplays.unshift(replay);
+  if (userReplays.length > 20) userReplays.pop();
+  
+  setDb("gameReplays", allReplays);
+}
+
+
+// ====================== AI (Unchanged) ======================
 function scorePosition(b, marker) {
   const opp = marker === "R" ? "Y" : "R";
   let score = 0;
-
   const centerCol = Math.floor(COLS/2);
   let centerCount = 0;
   for (let r = 0; r < ROWS; r++) if (b[r][centerCol] === marker) centerCount++;
@@ -327,35 +422,30 @@ function scorePosition(b, marker) {
     return 0;
   }
 
-  // horizontal
   for (let r = 0; r < ROWS; r++) {
     for (let c = 0; c < COLS - 3; c++) {
       const window = [b[r][c], b[r][c+1], b[r][c+2], b[r][c+3]];
       score += evalWindow(window);
     }
   }
-  // vertical
   for (let c = 0; c < COLS; c++) {
     for (let r = 0; r < ROWS - 3; r++) {
       const window = [b[r][c], b[r+1][c], b[r+2][c], b[r+3][c]];
       score += evalWindow(window);
     }
   }
-  // diag down-right
   for (let r = 0; r < ROWS - 3; r++) {
     for (let c = 0; c < COLS - 3; c++) {
       const window = [b[r][c], b[r+1][c+1], b[r+2][c+2], b[r+3][c+3]];
       score += evalWindow(window);
     }
   }
-  // diag down-left
   for (let r = 0; r < ROWS - 3; r++) {
     for (let c = 3; c < COLS; c++) {
       const window = [b[r][c], b[r+1][c-1], b[r+2][c-2], b[r+3][c-3]];
       score += evalWindow(window);
     }
   }
-
   return score;
 }
 
@@ -367,12 +457,12 @@ function getLegalCols(b) {
 
 function minimax(b, depth, alpha, beta, maximizingPlayer, aiMarker, depthLimit) {
   const validCols = getLegalCols(b);
-  const isTerminal = checkWin(b, "R") || checkWin(b, "Y") || validCols.length === 0;
+  const isTerminal = checkWin(b, "R").win || checkWin(b, "Y").win || validCols.length === 0;
 
   if (depth >= depthLimit || isTerminal) {
     if (isTerminal) {
-      if (checkWin(b, aiMarker)) return { score: 1000000 - depth };
-      if (checkWin(b, aiMarker === "R" ? "Y" : "R")) return { score: -1000000 + depth };
+      if (checkWin(b, aiMarker).win) return { score: 1000000 - depth };
+      if (checkWin(b, aiMarker === "R" ? "Y" : "R").win) return { score: -1000000 + depth };
       return { score: 0 };
     } else {
       return { score: scorePosition(b, aiMarker) };
@@ -409,24 +499,23 @@ function minimax(b, depth, alpha, beta, maximizingPlayer, aiMarker, depthLimit) 
   }
 }
 
-// Choose AI move
 function aiMove() {
   if (!gameActive) return;
-  
   const aiColor = playerNames.R === "Computer" ? "R" : "Y";
   const humanColor = aiColor === "R" ? "Y" : "R";
 
-  // AI's move logic, not the human's
   const aiPlayerMove = (col) => {
     if (!gameActive) return;
     const row = getDropRow(board, col);
     if (row === -1) return;
 
     placePiece(row, col, currentPlayer);
+    moveHistory.push({ player: currentPlayer, col: col }); // <-- NEW: Record AI move
     renderBoard();
 
-    if (checkWin(board, currentPlayer)) {
-      endGame(`${playerNames[currentPlayer]} Wins!`, currentPlayer);
+    const winInfo = checkWin(board, currentPlayer);
+    if (winInfo.win) {
+      endGame(`${playerNames[currentPlayer]} Wins!`, currentPlayer, winInfo.line);
       return;
     }
     if (isBoardFull(board)) {
@@ -436,10 +525,10 @@ function aiMove() {
 
     currentPlayer = humanColor;
     updateStatus(`${playerNames[currentPlayer]}'s Turn`);
+    updateTopRowListeners();
     stopTimer();
     if (timerEnabled) startTurnTimer();
   }
-
 
   if (aiDifficulty === "easy") {
     const legal = getLegalCols(board);
@@ -458,24 +547,22 @@ function aiMove() {
   aiPlayerMove(chosenCol);
 }
 
-// Event listeners
+// ====================== Event listeners ======================
 playHumanBtn.addEventListener("click", () => startGame(false));
-
 playAIBtn.addEventListener("click", () => startGame(true));
-
 restartBtn.addEventListener("click", () => resetBoard(false));
 
 backMenuBtn.addEventListener("click", () => {
   stopTimer();
   gameActive = false;
+  scores = { R: 0, Y: 0, D: 0 }; // Reset session scores
+  renderScores();
   gameScreen.classList.add("hidden");
   menuScreen.classList.remove("hidden");
 });
 
-themeToggle.addEventListener("click", () => {
-  const light = document.body.classList.toggle("light-theme");
-  themeToggle.textContent = `Theme: ${light ? "Light" : "Royal"}`;
-});
-
-// Initialize scores on load
+// Set default player name to logged in user
+if (loggedInUser) {
+  playerRedInput.value = loggedInUser;
+}
 renderScores();
