@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Game Hub - Replay</title>
+  <link rel="stylesheet" href="global.css" />
+  <link rel="stylesheet" href="tictactoe.css" />
+  <link rel="stylesheet" href="connect4.css" />
+  <style>
+    /* Ensure only one board is visible */
+    .board.hidden { display: none; }
+    .replay-controls { margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <nav class="header-nav">
+    <a href="hub.html" class="btn">Game Hub</a>
+    <a href="dashboard.html" class="btn">Dashboard</a>
+    <button id="logoutBtn" class="btn danger">Logout</button>
+  </nav>
+  <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">Theme: Royal</button>
+
+  <section class="card">
+    <h1 id="replayTitle">Game Replay</h1>
+    <p class="subtitle" id="replaySubtitle">Loading replay...</p>
+
+    <div id="tttBoard" class="board hidden"></div>
+    <div id="c4Board" class="board connect4-board hidden"></div>
+    
+    <div id="controls" class="btn-row replay-controls hidden">
+        <button id="playBtn" class="btn outline">Play</button>
+        <button id="pauseBtn" class="btn">Pause</button>
+        <button id="resetBtn" class="btn">Reset</button>
+    </div>
+  </section>
+
+  <script src="global.js"></script>
+  <script src="replay.js"></script>
+</body>
+</html>
