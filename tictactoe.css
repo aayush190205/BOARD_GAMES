@@ -1,4 +1,5 @@
-.board {
+
+.tictactoe-board {
   margin: 18px auto; 
   display: grid; 
   position: relative;
@@ -48,3 +49,4 @@
 @keyframes win-pulse { from { box-shadow: 0 0 10px var(--win-color); } to { box-shadow: 0 0 25px var(--win-color); } }
 @keyframes draw-line { to { transform: scaleX(1); } }
 @media (max-width: 420px) { .board { gap: 8px; padding: 8px; } }
+
