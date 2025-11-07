@@ -3,22 +3,36 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Game Hub</title>
-  <link rel="stylesheet" href="index.css" />
+  <title>Game Hub - Login</title>
+  <link rel="stylesheet" href="global.css" />
 </head>
 <body>
   <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">Theme: Royal</button>
 
-  <section class="card home-card">
-    <h1>Game Hub</h1>
-    <p class="subtitle">Choose a game to play</p>
+  <section class="card">
+    <h1 data-text="GAME HUB">GAME HUB</h1>
+    <p class="subtitle">Please login or register to play</p>
+    
+    <form id="loginForm" class="form-column">
+      <div class="field">
+        <label for="username">Username</label>
+        <input id="username" type="text" placeholder="Enter username" required />
+      </div>
+      <div class="field" style="margin-top: 12px;">
+        <label for="password">Password</label>
+        <input id="password" type="password" placeholder="Enter password" required />
+      </div>
+      
+      <p id="errorMessage" class="error-message hidden"></p>
 
-    <div class="btn-row">
-      <a class="btn" href="tictactoe.html">Play Tic Tac Toe</a>
-      <a class="btn outline" href="connect4.html">Play Connect 4</a>
-    </div>
+      <div class="btn-row">
+        <button type="submit" id="loginBtn" class="btn outline">Login</button>
+        <button type="button" id="registerBtn" class="btn">Register</button>
+      </div>
+    </form>
   </section>
 
+  <script src="global.js"></script>
   <script src="index.js"></script>
 </body>
 </html>
