@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Game Hub - Main Menu</title>
+  <link rel="stylesheet" href="global.css" />
+</head>
+<body>
+  <nav class="header-nav">
+    <a href="dashboard.html" class="btn">Dashboard</a>
+    <button id="logoutBtn" class="btn danger">Logout</button>
+  </nav>
+  <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">Theme: Royal</button>
+
+  <section class="card">
+    <h1 id="welcomeTitle">Game Hub</h1>
+    <p class="subtitle">Choose a game to play</p>
+
+    <div class="btn-row">
+      <a class="btn" href="tictactoe.html">Play Tic Tac Toe</a>
+      <a class="btn outline" href="connect4.html">Play Connect 4</a>
+    </div>
+  </section>
+
+  <script src="global.js"></script>
+  <script src="hub.js"></script>
+</body>
+</html>
