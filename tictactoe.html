@@ -4,16 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tic Tac Toe</title>
+  <link rel="stylesheet" href="global.css"/>
   <link rel="stylesheet" href="tictactoe.css"/>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+  <nav class="header-nav">
+    <a href="hub.html" class="btn">Game Hub</a>
+    <a href="dashboard.html" class="btn">Dashboard</a>
+    <button id="logoutBtn" class="btn danger">Logout</button>
+  </nav>
   <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">Theme: Royal</button>
 
   <section id="menuScreen" class="card">
-    <h1>Tic Tac Toe</h1>
+    <h1 class="glitch" data-text="TIC-TAC-TOE">Tic Tac Toe</h1>
     <p class="subtitle">Choose your mode & options</p>
 
     <div class="form-row">
@@ -26,26 +29,18 @@
         <input id="playerO" type="text" placeholder="Player O (or AI)"/>
       </div>
     </div>
-
+    
     <div class="form-row">
       <label class="checkbox">
         <input id="enableTimer" type="checkbox"/>
-        <span>Enable per-move timer</span>
+        <span>Enable per-move timer (10s)</span>
       </label>
-      <div class="field small">
-        <label for="timerSeconds">Seconds</label>
-        <input id="timerSeconds" type="number" min="3" max="60" value="10"/>
-      </div>
-    </div>
-
-    <div class="form-row">
       <label class="checkbox">
         <input id="tournamentMode" type="checkbox"/>
         <span>Tournament Mode (Best of 3)</span>
       </label>
     </div>
 
-    <!-- NEW: AI Options -->
     <div id="aiOptions" class="form-row hidden">
       <div class="field small">
         <label for="aiDifficulty">BOT Difficulty</label>
@@ -87,6 +82,7 @@
     </div>
   </section>
 
+  <script src="global.js"></script>
   <script src="tictactoe.js"></script>
 </body>
 </html>
