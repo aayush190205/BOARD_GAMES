@@ -25,7 +25,7 @@ let tournamentWins = { R: 0, Y: 0 };
 let aiEnabled = false;
 let aiDifficulty = "hard";
 let aiFirst = false;
-let moveHistory = []; // <-- NEW: For replays
+let moveHistory = []; 
 
 // DOM
 const menuScreen = document.getElementById("menuScreen");
@@ -111,7 +111,7 @@ function resetBoard(startNew = false) {
   board = createEmptyBoard();
   currentPlayer = "R";
   gameActive = true;
-  moveHistory = []; // <-- NEW: Reset history
+  moveHistory = []; 
 
   boardEl.innerHTML = "";
   for (let r = 0; r < ROWS; r++) {
@@ -120,14 +120,13 @@ function resetBoard(startNew = false) {
       slot.className = "connect4-slot";
       slot.dataset.row = r;
       slot.dataset.col = c;
-      // We will add click listeners to the *top row* only
-      if (r === 0) {
-        slot.addEventListener("click", onSlotClick);
-      }
+      // *** CHANGE 1: Add listener to ALL slots ***
+      slot.addEventListener("click", onSlotClick);
       boardEl.appendChild(slot);
     }
   }
-  updateTopRowListeners(); // Enable/disable top row
+  // *** CHANGE 2: Call new function ***
+  updateColumnListeners(); 
   updateStatus(`${playerNames[currentPlayer]}'s Turn`);
 
   stopTimer();
@@ -142,9 +141,10 @@ function resetBoard(startNew = false) {
 }
 
 // ====================== Game Play ======================
+// *** CHANGE 3: This function now works by getting 'col' from any slot ***
 function onSlotClick(e) {
   if (!gameActive) return;
-  const col = Number(e.currentTarget.dataset.col);
+  const col = Number(e.currentTarget.dataset.col); // Get col from clicked slot
   handlePlayerMove(col);
 }
 
@@ -160,7 +160,7 @@ function handlePlayerMove(col) {
   if (row === -1) return; // Column is full
 
   placePiece(row, col, currentPlayer);
-  moveHistory.push({ player: currentPlayer, col: col }); // <-- NEW: Record move
+  moveHistory.push({ player: currentPlayer, col: col }); 
   renderBoard();
 
   const winInfo = checkWin(board, currentPlayer);
@@ -175,7 +175,8 @@ function handlePlayerMove(col) {
 
   currentPlayer = currentPlayer === "R" ? "Y" : "R";
   updateStatus(`${playerNames[currentPlayer]}'s Turn`);
-  updateTopRowListeners();
+  // *** CHANGE 4: Call new function ***
+  updateColumnListeners();
   stopTimer();
   if (timerEnabled) startTurnTimer();
 
@@ -217,29 +218,27 @@ function renderBoard() {
   });
 }
 
-// Enable/disable top row clicks
-function updateTopRowListeners() {
+// *** CHANGE 5: New function to disable/enable ALL slots in a column ***
+function updateColumnListeners() {
     for (let c = 0; c < COLS; c++) {
-        const topSlot = boardEl.querySelector(`[data-row='0'][data-col='${c}']`);
-        if (topSlot) {
-            if (getDropRow(board, c) === -1) { // Column is full
-                topSlot.classList.add("disabled");
-                topSlot.removeEventListener("click", onSlotClick);
+        const isFull = getDropRow(board, c) === -1; // Is this column full?
+        const colSlots = boardEl.querySelectorAll(`[data-col='${c}']`);
+        
+        colSlots.forEach(slot => {
+            if (isFull) {
+                slot.classList.add("disabled");
             } else {
-                topSlot.classList.remove("disabled");
-                topSlot.addEventListener("click", onSlotClick);
+                slot.classList.remove("disabled");
             }
-        }
+        });
     }
 }
-
 
 // ====================== Game End ======================
 function endGame(message, resultKey, winLine = []) {
   gameActive = false;
   updateStatus(message);
 
-  // --- NEW: Highlight winning pieces ---
   winLine.forEach(pos => {
       const [r, c] = pos;
       const slot = boardEl.querySelector(`[data-row='${r}'][data-col='${c}']`);
@@ -255,15 +254,15 @@ function endGame(message, resultKey, winLine = []) {
     scores.D += 1;
   }
   
-  // --- NEW: Save Stats & Replay ---
   if (!tournamentMode) {
       saveGameStats(resultKey);
       saveGameReplay(resultKey);
   }
-  // --- End New ---
   
   renderScores();
   stopTimer();
+  // Disable all slots at end of game
+  updateColumnListeners(); 
 
   if (tournamentMode) {
     roundsPlayed++;
@@ -368,7 +367,7 @@ function saveGameStats(resultKey) {
       userStats.wins++;
     }
   } else {
-    userStats.draws++; // Mark as draw for human v human
+    userStats.draws++; 
   }
   
   setDb("gameStats", allStats);
@@ -510,7 +509,7 @@ function aiMove() {
     if (row === -1) return;
 
     placePiece(row, col, currentPlayer);
-    moveHistory.push({ player: currentPlayer, col: col }); // <-- NEW: Record AI move
+    moveHistory.push({ player: currentPlayer, col: col }); 
     renderBoard();
 
     const winInfo = checkWin(board, currentPlayer);
@@ -525,7 +524,8 @@ function aiMove() {
 
     currentPlayer = humanColor;
     updateStatus(`${playerNames[currentPlayer]}'s Turn`);
-    updateTopRowListeners();
+    // *** CHANGE 6: Call new function ***
+    updateColumnListeners();
     stopTimer();
     if (timerEnabled) startTurnTimer();
   }
@@ -555,13 +555,12 @@ restartBtn.addEventListener("click", () => resetBoard(false));
 backMenuBtn.addEventListener("click", () => {
   stopTimer();
   gameActive = false;
-  scores = { R: 0, Y: 0, D: 0 }; // Reset session scores
+  scores = { R: 0, Y: 0, D: 0 }; 
   renderScores();
   gameScreen.classList.add("hidden");
   menuScreen.classList.remove("hidden");
 });
 
-// Set default player name to logged in user
 if (loggedInUser) {
   playerRedInput.value = loggedInUser;
 }
