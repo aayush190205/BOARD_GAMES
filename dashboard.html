@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Game Hub - Dashboard</title>
+  <link rel="stylesheet" href="global.css" />
+  <style>
+    .card.dashboard-card {
+      width: min(95vw, 1200px);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .chart-container {
+      background: var(--tile-bg);
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid var(--line-color);
+    }
+    .replay-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 15px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .replay-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: var(--tile-bg);
+      border: 1px solid var(--line-color);
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+    .replay-item-info {
+      font-size: 0.9rem;
+    }
+    .replay-item-info strong {
+      color: var(--text-light);
+      font-size: 1rem;
+    }
+    .replay-item-info span {
+      color: var(--text-muted);
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="header-nav">
+    <a href="hub.html" class="btn">Game Hub</a>
+    <button id="logoutBtn" class="btn danger">Logout</button>
+  </nav>
+  <button id="themeToggle" class="theme-toggle" aria-label="Toggle Theme">Theme: Royal</button>
+
+  <section class="card dashboard-card">
+    <h1 id="dashTitle">My Dashboard</h1>
+    <p class="subtitle">Your all-time stats vs AI and game replay history</p>
+
+    <div class="stats-grid">
+      <div>
+        <h2>AI Game Stats</h2>
+        <div class="chart-container">
+          <canvas id="tttChart"></canvas>
+        </div>
+        <div class="chart-container" style="margin-top: 20px;">
+          <canvas id="c4Chart"></canvas>
+        </div>
+      </div>
+      
+      <div>
+        <h2>Recent Game Replays</h2>
+        <ul id="replayList" class="replay-list">
+          </ul>
+      </div>
+    </div>
+  </section>
+
+  <script src="chart.js"></script> <script src="global.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>
