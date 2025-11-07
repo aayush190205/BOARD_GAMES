@@ -32,7 +32,8 @@ function loadStats() {
   const tttCtx = document.getElementById('tttChart').getContext('2d');
   const tttData = userStats.ticTacToe;
   if (tttData.wins === 0 && tttData.losses === 0 && tttData.draws === 0) {
-      document.getElementById('tttChart').parentElement.innerHTML = "<h3>Tic Tac Toe</h3><p>No AI games played yet.</p>";
+      // Updated to just show a message inside the canvas's parent
+      document.getElementById('tttChart').parentElement.innerHTML = "<h2>Tic Tac Toe Stats</h2><p style='padding: 20px 0; text-align: center;'>No AI games played yet.</p>";
   } else {
       new Chart(tttCtx, {
         type: 'pie',
@@ -47,7 +48,7 @@ function loadStats() {
         options: {
           responsive: true,
           plugins: {
-            title: { display: true, text: 'Tic Tac Toe (vs AI)' }
+            title: { display: false } // Title is in HTML H2 now
           }
         }
       });
@@ -57,7 +58,8 @@ function loadStats() {
   const c4Ctx = document.getElementById('c4Chart').getContext('2d');
   const c4Data = userStats.connect4;
    if (c4Data.wins === 0 && c4Data.losses === 0 && c4Data.draws === 0) {
-      document.getElementById('c4Chart').parentElement.innerHTML = "<h3>Connect 4</h3><p>No AI games played yet.</p>";
+      // Updated to just show a message inside the canvas's parent
+      document.getElementById('c4Chart').parentElement.innerHTML = "<h2>Connect 4 Stats</h2><p style='padding: 20px 0; text-align: center;'>No AI games played yet.</p>";
   } else {
       new Chart(c4Ctx, {
         type: 'pie',
@@ -72,25 +74,25 @@ function loadStats() {
         options: {
           responsive: true,
           plugins: {
-            title: { display: true, text: 'Connect 4 (vs AI)' }
+            title: { display: false } 
           }
         }
       });
   }
 }
 
-// --- 2. Load Replays ---
+
 function loadReplays() {
   const allReplays = getDb("gameReplays");
   const replayListEl = document.getElementById("replayList");
   
   if (!allReplays || !allReplays[loggedInUser] || allReplays[loggedInUser].length === 0) {
-    replayListEl.innerHTML = "<p>No replays saved. Go play a game!</p>";
+    replayListEl.innerHTML = "<p style='padding: 20px 0; text-align: center;'>No replays saved. Go play a game!</p>";
     return;
   }
   
   const userReplays = allReplays[loggedInUser];
-  replayListEl.innerHTML = ""; // Clear list
+  replayListEl.innerHTML = ""; 
   
   userReplays.forEach(replay => {
     const li = document.createElement("li");
@@ -107,7 +109,5 @@ function loadReplays() {
   });
 }
 
-
-// --- Run on page load ---
 loadStats();
 loadReplays();
