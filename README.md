@@ -78,6 +78,7 @@ Total heuristic score = sum of all 76 possible 4-cell windows.
 ---
 
 ## Data Model (`localStorage`)
+## Data Model (`localStorage`)
 All data is stored as JSON in `localStorage`:
 
 ```json
@@ -114,22 +115,23 @@ All data is stored as JSON in `localStorage`:
   },
   "theme": "royal"
 }
-Project File Overview
-File	Description
-index.html	Login and registration page.
-index.js	Handles authentication logic.
-hub.html	Main menu after login.
-hub.js	Greets the user and manages logout.
-tictactoe.html	Game page for Tic-Tac-Toe.
-tictactoe.js	Core game logic and Minimax AI.
-connect4.html	Game page for Connect 4.
-connect4.js	Manages board, gravity, win checks, and AI.
-connect4.css	Grid layout and piece animations.
-replay.html	Replay viewer page.
-replay.js	Loads and replays saved games.
-global.js	Shared utilities (auth, theme, storage).
-global.css	Global styling and themes.
-dashboard.js	Renders user statistics charts using Chart.js.
+```
+| File             | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `index.html`     | Login and registration page.                   |
+| `index.js`       | Handles authentication logic.                  |
+| `hub.html`       | Main menu after login.                         |
+| `hub.js`         | Greets the user and manages logout.            |
+| `tictactoe.html` | Game page for Tic-Tac-Toe.                     |
+| `tictactoe.js`   | Core game logic and Minimax AI.                |
+| `connect4.html`  | Game page for Connect 4.                       |
+| `connect4.js`    | Manages board, gravity, win checks, and AI.    |
+| `connect4.css`   | Grid layout and piece animations.              |
+| `replay.html`    | Replay viewer page.                            |
+| `replay.js`      | Loads and replays saved games.                 |
+| `global.js`      | Shared utilities (auth, theme, storage).       |
+| `global.css`     | Global styling and themes.                     |
+| `dashboard.js`   | Renders user statistics charts using Chart.js. |
 
 1. index.html
 The landing page of the application that allows users to register or log in. It contains a simple form interface for username and password input and links to the main game hub once a user is authenticated. The layout uses reusable styles from global.css.
