@@ -133,147 +133,156 @@ All data is stored as JSON in `localStorage`:
 | `global.css`     | Global styling and themes.                     |
 | `dashboard.js`   | Renders user statistics charts using Chart.js. |
 
-1. index.html
-The landing page of the application that allows users to register or log in. It contains a simple form interface for username and password input and links to the main game hub once a user is authenticated. The layout uses reusable styles from global.css.
+Here’s your entire section — perfectly formatted for GitHub Markdown (so it displays exactly right in the preview).
+✅ The table, subpoints, and line breaks are all properly aligned.
+✅ Works directly if pasted into README.md.
 
-2. index.js
-Handles authentication logic:
+## Project File Overview
 
-handleRegister() validates and stores new users in localStorage (gameHubUsers).
+| File             | Description                                    |
+| ---------------- | ---------------------------------------------- |
+| `index.html`     | Login and registration page.                   |
+| `index.js`       | Handles authentication logic.                  |
+| `hub.html`       | Main menu after login.                         |
+| `hub.js`         | Greets the user and manages logout.            |
+| `tictactoe.html` | Game page for Tic-Tac-Toe.                     |
+| `tictactoe.js`   | Core game logic and Minimax AI.                |
+| `connect4.html`  | Game page for Connect 4.                       |
+| `connect4.js`    | Manages board, gravity, win checks, and AI.    |
+| `connect4.css`   | Grid layout and piece animations.              |
+| `replay.html`    | Replay viewer page.                            |
+| `replay.js`      | Loads and replays saved games.                 |
+| `global.js`      | Shared utilities (auth, theme, storage).       |
+| `global.css`     | Global styling and themes.                     |
+| `dashboard.js`   | Renders user statistics charts using Chart.js. |
 
-handleLogin() authenticates existing users and initializes their profile data (gameStats and gameReplays).
+---
 
-On success, it sets currentUser and redirects to hub.html.
+### 1. `index.html`
+The landing page of the application that allows users to **register or log in**.  
+It contains a simple form interface for username and password input and links to the main game hub once a user is authenticated.  
+The layout uses reusable styles from `global.css`.
 
-3. hub.html
-The main dashboard after login. It displays a welcome message, theme toggle, and game selection options (Tic-Tac-Toe or Connect 4). Includes navigation links to stats, replay pages, and logout.
+### 2. `index.js`
+Handles **authentication logic**:
+- `handleRegister()` validates and stores new users in `localStorage` (`gameHubUsers`).
+- `handleLogin()` authenticates existing users and initializes their profile data (`gameStats` and `gameReplays`).
+- On success, it sets `currentUser` and redirects to `hub.html`.
 
-4. hub.js
-Provides dashboard interactivity:
+### 3. `hub.html`
+The **main dashboard** after login.  
+Displays a welcome message, theme toggle, and game selection options (Tic-Tac-Toe or Connect 4).  
+Includes navigation links to stats, replay pages, and logout.
 
-Displays the current user’s name dynamically.
+### 4. `hub.js`
+Provides **dashboard interactivity**:
+- Displays the current user’s name dynamically.
+- Implements `handleLogout()` to clear `currentUser`.
+- Invokes `applyTheme()` from `global.js` to maintain the saved theme across sessions.
 
-Implements handleLogout() to clear currentUser.
+### 5. `tictactoe.html`
+Dedicated page for the **Tic-Tac-Toe game**.  
+Contains the 3×3 grid, control buttons for difficulty level, timer, and restart, as well as a stats section that updates after every match.
 
-Invokes applyTheme() from global.js to maintain the saved theme across sessions.
+### 6. `tictactoe.js`
+Implements the **entire Tic-Tac-Toe game logic**:
+- Represents the board as a 9-element array.
+- Handles user clicks via `onCellClick()`.
+- Checks winning lines using predefined `WIN_LINES`.
+- Contains a **Minimax AI** that ensures unbeatable play at hard difficulty.
+- Updates `gameStats` and `gameReplays` in `localStorage` upon each completed game.
 
-5. tictactoe.html
-The dedicated page for the Tic-Tac-Toe game. Contains the 3×3 grid, control buttons for difficulty level, timer, and restart, as well as a stats section that updates after every match.
+### 7. `connect4.html`
+Hosts the **Connect 4 interface**:  
+A 6×7 grid built using CSS Grid Layout.  
+Includes a header for game status, difficulty selection, and links back to the hub.  
+Each cell is a `.connect4-slot` with `data-row` and `data-col` attributes for mapping JS logic to the DOM.
 
-6. tictactoe.js
-Implements the entire Tic-Tac-Toe game logic:
+### 8. `connect4.js`
+Contains the **core logic for Connect 4**, including:
+- Dynamic 6×7 board initialization.
+- `getDropRow()` simulates gravity by finding the lowest empty slot in a column.
+- Computer opponent implemented using Minimax with Alpha-Beta Pruning and a heuristic evaluator (`scorePosition()`).
+- Win detection checks all 76 possible 4-in-a-row combinations.
+- Includes replay saving and timer handling.
 
-Represents the board as a 9-element array.
+### 9. `connect4.css`
+Defines the **styling and animations** for Connect 4:
+- Uses `display: grid` and `grid-template-columns: repeat(7, ...)`.
+- Styles empty slots and colored discs (`.piece.red`, `.piece.yellow`).
+- Includes winning animation effects (`.win-pulse`).
+- Provides smooth “drop-in” animations via `@keyframes`.
 
-Handles user clicks via onCellClick().
+### 10. `replay.html`
+Displays the **game replay viewer** interface.  
+Allows users to rewatch completed games stored in `localStorage`.  
+Loads the correct replay based on the replay ID passed in the URL query string.
 
-Checks winning lines using predefined WIN_LINES.
+### 11. `replay.js`
+Implements **replay playback logic**:
+- Retrieves replay data from `gameReplays` using the current user ID and replay ID.
+- Reconstructs the game step-by-step using `setInterval`.
+- For Connect 4, re-simulates gravity to show realistic piece drops.
+- Supports play/pause/reset controls.
 
-Contains a Minimax AI that ensures unbeatable play at hard difficulty.
+### 12. `global.js`
+Contains **utility functions and shared logic** across all pages:
+- `getDb()` and `setDb()` for safe access to `localStorage`.
+- `authCheck()` redirects unauthorized users to `index.html`.
+- `applyTheme()` applies stored theme preferences.
+- Centralizes constants and helper methods for consistency.
 
-Updates gameStats and gameReplays in localStorage upon each completed game.
+### 13. `global.css`
+Defines **global styling rules**:
+- CSS variables for dark/light themes using `:root` and `.light-theme`.
+- Shared styles for buttons, headers, forms, and cards.
+- Implements the UI theme switcher and common animations.
 
-7. connect4.html
-Hosts the Connect 4 interface: a 6×7 grid built using CSS Grid Layout. Includes a header for game status, buttons for difficulty selection, and links back to the hub. Each cell is a .connect4-slot with data-row and data-col attributes for mapping JS logic to the DOM.
+### 14. `dashboard.js` (optional)
+Responsible for rendering **user performance statistics** on the dashboard.  
+Uses **Chart.js** to generate pie charts for Tic-Tac-Toe and Connect 4 results.  
+Reads data from the `gameStats` object of the logged-in user.
 
-8. connect4.js
-The core logic for Connect 4, including:
+---
 
-Dynamic 6×7 board initialization.
+## File Interactions Summary
+- `index.html` → `hub.html` (after login)  
+- `hub.html` → `tictactoe.html` or `connect4.html` (game selection)  
+- `tictactoe.js` and `connect4.js` → update shared data via `global.js`  
+- `replay.js` → reads data from `gameReplays` and visualizes past games  
+- `global.js` → provides helper functions used across all scripts  
 
-getDropRow() function that simulates gravity by finding the lowest empty slot in a column.
+---
 
-AI opponent implemented using Minimax with Alpha-Beta Pruning and a heuristic evaluator (scorePosition()).
+## Key Challenges & Solutions
 
-Win detection checks all 76 possible 4-in-a-row combinations.
+### 1. AI Blocking the UI
+**Challenge:** The Minimax search can freeze the browser.  
+**Solution:** Wrapped logic in `setTimeout(..., 300)` to allow UI updates before computation, simulating “thinking time”.
 
-Includes replay saving and timer handling.
+### 2. State Management & Immutability
+**Challenge:** Passing the board by reference caused unwanted state mutations.  
+**Solution:** Implemented `copyBoard()` (`b.map(row => row.slice())`) to ensure isolated simulations.
 
-9. connect4.css
-Defines the styling and animations for the Connect 4 grid:
+### 3. Heuristic Tuning
+**Challenge:** Balancing weights for Connect 4’s evaluation function.  
+**Solution:** Adjusted heuristics iteratively through self-play simulations.
 
-Uses display: grid and grid-template-columns: repeat(7, ...).
+---
 
-Styles empty slots, colored discs (.piece.red, .piece.yellow), and winning animations (.win-pulse).
+## Future Enhancements
+- Cloud profiles using Firebase for synced data.  
+- Online multiplayer via WebSockets (Socket.io).  
+- Smarter opponent using TensorFlow.js (Neural Networks or MCTS).  
+- Add more games (Othello, Checkers, Chess).  
+- Enhanced animations and sound effects with Howler.js or Lottie.  
 
-Provides smooth “drop-in” animations via @keyframes.
+---
 
-10. replay.html
-Displays the game replay viewer interface. Allows users to rewatch completed games stored in localStorage. Loads the correct replay based on the replay ID passed in the URL query string.
+## Tech Stack
+- **Frontend:** HTML5, CSS3, JavaScript
+- **Storage:** Browser localStorage
+- **Deployment:** GitHub Pages
+  
 
-11. replay.js
-Implements replay playback logic:
-
-Retrieves replay data from gameReplays using the current user ID and replay ID.
-
-Reconstructs the game state step-by-step using setInterval.
-
-For Connect 4, it re-simulates gravity to visualize realistic piece drops.
-
-Supports play/pause/reset controls.
-
-12. global.js
-Contains utility functions and shared logic used across all pages:
-
-getDb() and setDb() for reading/writing localStorage safely.
-
-authCheck() redirects unauthorized users to index.html.
-
-applyTheme() applies stored theme preferences.
-
-Centralizes constants and helper methods for consistency.
-
-13. global.css
-Defines global styling rules:
-
-CSS variables for dark/light themes using :root and .light-theme.
-
-Shared classes for buttons, headers, forms, and cards.
-
-Implements the main UI theme switcher and global animations.
-
-14. dashboard.js (optional)
-Responsible for rendering user performance statistics on the dashboard. Uses Chart.js to generate pie charts for Tic-Tac-Toe and Connect 4 results. Reads data from the gameStats object of the logged-in user.
-
-File Interactions Summary
-index.html → hub.html (after login)
-
-hub.html → tictactoe.html or connect4.html (game selection)
-
-tictactoe.js and connect4.js → update shared data via global.js
-
-replay.js → reads data from gameReplays and visualizes past games
-
-global.js → provides helper functions used across all scripts
-
-Key Challenges & Solutions
-1. AI Blocking the UI
-Challenge: Minimax is computationally heavy and can freeze the browser.
-Solution: Wrapped AI logic in setTimeout(..., 300) to allow UI updates before computation, simulating “thinking time”.
-
-2. State Management & Immutability
-Challenge: Passing board by reference caused AI to modify the live game state.
-Solution: Implemented copyBoard() (b.map(row => row.slice())) to ensure independent simulation.
-
-3. Heuristic Tuning
-Challenge: Finding balanced weights for Connect 4’s evaluation function.
-Solution: Iterative self-play testing and weight tuning for realistic play behavior.
-
-Future Enhancements
-Cloud profiles using Firebase for synced data.
-
-Online multiplayer using WebSockets (e.g., Socket.io).
-
-Advanced AI using TensorFlow.js (Neural Networks or MCTS).
-
-Add more games (Othello, Checkers, Chess).
-
-Improved animations and sound effects using Howler.js or Lottie.
-
-Tech Stack
-Frontend: HTML5, CSS3, JavaScript (ES6+)
-
-Storage: Browser localStorage
-
-Deployment: GitHub Pages
 
